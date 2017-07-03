@@ -61,6 +61,20 @@ void print_mpi(const char *title, const mbedtls_mpi *n) {
     printf("%s %s\n", title, buf);
 }
 
+// Helper to check if this holds for prime P: curve->p == 3 (mod 4)
+void check_prime(mbedtls_mpi *P){
+    mbedtls_mpi tmp;
+    mbedtls_mpi _4;
+    mbedtls_mpi_init(&tmp);
+    mbedtls_mpi_init(&_4);
+
+    mbedtls_mpi_lset( &_4, 4 );
+    mbedtls_mpi_copy(&tmp, P);
+
+    mbedtls_mpi_mod_mpi(&tmp, &tmp, &_4);
+    print_mpi("We can use fast sqrt mod P if the output is 3: ", &tmp);
+}
+
 int mbedtls_ecp_decompress(
     const mbedtls_ecp_group *grp,
     const unsigned char *input, size_t ilen,
