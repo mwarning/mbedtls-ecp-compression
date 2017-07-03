@@ -97,7 +97,7 @@ int mbedtls_ecp_decompress(
     mbedtls_mpi_init(&x);
     mbedtls_mpi_init(&n);
 
-    // x <= ...
+    // x <= input
     MBEDTLS_MPI_CHK( mbedtls_mpi_read_binary(&x, input + 1, plen) );
 
     // r = x
@@ -116,23 +116,22 @@ int mbedtls_ecp_decompress(
 
     // r = x^3 + ax
     MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi(&r, &r, &x ) );
-    //mbedtls_mpi_mod_mpi(&r, &r, &grp->P);
 
     // r = x^3 + ax + b
     MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi(&r, &r, &grp->B) );
-    //mbedtls_mpi_mod_mpi(&r, &r, &grp->P);
 
-    // r = sqrt(x^3 + ax + b) = n
-    // r = n ^ ((P + 1) / 4)
-    //https://crypto.stackexchange.com/questions/6777/how-to-calculate-y-value-from-yy-mod-prime-efficiently
+    // r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
+
     // n = P + 1
     MBEDTLS_MPI_CHK( mbedtls_mpi_add_int(&n, &grp->P, 1) );
+
     // n = (P + 1) / 4
     MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r(&n, 2) );
-    // ..
+
+    // r ^ ((P + 1) / 4)
     MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod(&r, &r, &n, &grp->P, NULL) );
 
-    // set sign
+    // Set sign
     MBEDTLS_MPI_CHK( mbedtls_mpi_set_bit( &r, 0, input[0] & 1 ) );
 
     ret = mbedtls_mpi_write_binary(&r, output + 1 + plen, plen);

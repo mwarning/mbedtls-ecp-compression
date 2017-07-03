@@ -6,3 +6,8 @@ As of mbedtls 2.5.1, mbedtls does not support decompression.
 
 The code is currently buggy and performs correctly half of the time!
 It would be great if someone spots the bug. :-)
+
+
+Resources:
+- https://github.com/ARMmbed/mbedtls/pull/521
+- https://crypto.stackexchange.com/questions/6777/how-to-calculate-y-value-from-yy-mod-prime-efficiently
