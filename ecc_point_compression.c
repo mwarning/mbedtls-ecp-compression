@@ -83,77 +83,72 @@ int mbedtls_ecp_decompress(
     int ret;
     size_t plen;
 
-
     plen = mbedtls_mpi_size( &grp->P );
 
     *olen = 2 * plen + 1; 
 
-    if( osize < *olen) {
-        return MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL;
-    }
+    if( osize < *olen || ilen != (plen + 1) )
+        return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
 
-    if( ilen != (plen + 1)) {
-        return MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL;
-    }
-
-    if( input[0] != 0x02 && input[0] != 0x03) {
+    if( input[0] != 0x02 && input[0] != 0x03 )
         return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
-    }
 
-    memcpy(output, input, ilen);
+    // 0x04+X+Y
+    memcpy( output, input, ilen );
     output[0] = 0x04;
 
     mbedtls_mpi r;
     mbedtls_mpi x;
     mbedtls_mpi n;
 
-    mbedtls_mpi_init(&r);
-    mbedtls_mpi_init(&x);
-    mbedtls_mpi_init(&n);
+    mbedtls_mpi_init( &r );
+    mbedtls_mpi_init( &x );
+    mbedtls_mpi_init( &n );
 
     // x <= input
-    MBEDTLS_MPI_CHK( mbedtls_mpi_read_binary(&x, input + 1, plen) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_read_binary( &x, input + 1, plen ) );
 
     // r = x
-    MBEDTLS_MPI_CHK( mbedtls_mpi_copy(&r, &x) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_copy( &r, &x ) );
 
     // r = x^2
-    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi(&r, &r, &x) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) );
 
     // r = x^2 + a
     if( grp->A.p == NULL ) {
         // Special case where a is -3
-        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_int(&r, &r, 3) );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_int( &r, &r, 3 ) );
     } else {
-        MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi(&r, &r, &grp->A) );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->A ) );
     }
 
     // r = x^3 + ax
-    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi(&r, &r, &x ) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) );
 
     // r = x^3 + ax + b
-    MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi(&r, &r, &grp->B) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->B ) );
 
     // r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
 
     // n = P + 1
-    MBEDTLS_MPI_CHK( mbedtls_mpi_add_int(&n, &grp->P, 1) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_add_int( &n, &grp->P, 1 ) );
 
     // n = (P + 1) / 4
-    MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r(&n, 2) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r( &n, 2 ) );
 
     // r ^ ((P + 1) / 4)
-    MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod(&r, &r, &n, &grp->P, NULL) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod( &r, &r, &n, &grp->P, NULL ) );
 
     // Set sign
     MBEDTLS_MPI_CHK( mbedtls_mpi_set_bit( &r, 0, input[0] & 1 ) );
 
-    ret = mbedtls_mpi_write_binary(&r, output + 1 + plen, plen);
+    // output => y
+    ret = mbedtls_mpi_write_binary( &r, output + 1 + plen, plen );
 
 cleanup:
-    mbedtls_mpi_free(&r);
-    mbedtls_mpi_free(&x);
-    mbedtls_mpi_free(&n);
+    mbedtls_mpi_free( &r );
+    mbedtls_mpi_free( &x );
+    mbedtls_mpi_free( &n );
 
     return( ret );
 }
@@ -172,7 +167,8 @@ int mbedtls_ecp_compress(
     if( osize < *olen )
         return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
 
-    memcpy(output, input, *olen);
+    // 0x02+X if Y is even, 0x03+X if Y is odd
+    memcpy( output, input, *olen );
     output[0] = 0x02 + (input[*olen] & 1);
 
 cleanup:
@@ -183,7 +179,7 @@ cleanup:
 * Test mbedtls_ecp_compress() / mbedtls_ecp_decompress() by signing a hash and
 * transfering the public key in its compressed form from ctx_sign to ctx_verify.
 */
-int test(int ecparams) {
+int test( int ecparams ) {
     int ret;
     mbedtls_pk_context ctx_verify;
     mbedtls_pk_context ctx_sign;
@@ -205,7 +201,7 @@ int test(int ecparams) {
         (const unsigned char *) pers, strlen( pers ) ) ) != 0 )
     {
         printf( "mbedtls_ctr_drbg_seed returned %d\n", ret );
-        exit(1);
+        return( 1 );
     }
 
     printf( "Generating key pair...\n" );
@@ -213,14 +209,14 @@ int test(int ecparams) {
     if( ( ret = mbedtls_pk_setup( &ctx_sign, mbedtls_pk_info_from_type( MBEDTLS_PK_ECKEY ) ) ) != 0 )
     {
         printf( "mbedtls_pk_setup returned -0x%04x", -ret );
-        exit(1);
+        return( 1 );
     }
 
     if( (ret = mbedtls_ecp_gen_key( ecparams, mbedtls_pk_ec( ctx_sign ),
         mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
     {
         printf( "mbedtls_ecp_gen_key returned %d\n", ret );
-        exit(1);
+        return( 1 );
     }
  
     dump_pubkey( "Public key: ", mbedtls_pk_ec( ctx_sign ) );
@@ -231,7 +227,7 @@ int test(int ecparams) {
             hash, sizeof( hash ), sig, &sig_len, mbedtls_ctr_drbg_random, &ctr_drbg ) ) != 0 )
     {
         printf( "mbedtls_ecdsa_genkey returned %d\n", ret );
-        exit(1);
+        return( 1 );
     }
 
     printf( "ok (signature length = %lu)\n", sig_len );
@@ -246,7 +242,7 @@ int test(int ecparams) {
     if( ( ret = mbedtls_pk_setup( &ctx_verify, mbedtls_pk_info_from_type( MBEDTLS_PK_ECKEY ) ) ) != 0 )
     {
         printf( "mbedtls_pk_setup returned -0x%04x", -ret );
-        exit(1);
+        return( 1 );
     }
 
     mbedtls_ecp_group_load( &mbedtls_pk_ec( ctx_verify )->grp, ecparams );
@@ -256,36 +252,36 @@ int test(int ecparams) {
             &mbedtls_pk_ec( ctx_sign )->Q, MBEDTLS_ECP_PF_UNCOMPRESSED, &buflen,
             buf, sizeof(buf) )) != 0 )
     {
-        printf("mbedtls_ecp_point_write_binary returned: %d\n", ret);
-        exit(1);
+        printf( "mbedtls_ecp_point_write_binary returned: %d\n", ret );
+        return( 1 );
     }
 
     {
-        printf("Perform key transform...\n");
+        printf( "Perform key transform...\n" );
 
         size_t compressed_len;
         unsigned char compressed[512];
 
         // We have the uncompressed key
-        printf( "decompressed:  %s\n", bytes_to_hex(buf, buflen));
+        printf( "decompressed:  %s\n", bytes_to_hex(buf, buflen) );
 
         // compress key from buf to compressed
         mbedtls_ecp_compress(&mbedtls_pk_ec(ctx_verify)->grp, buf, buflen,
             compressed, &compressed_len, sizeof(compressed));
-        printf("compressed:    %s\n", bytes_to_hex(compressed, compressed_len) );
+        printf( "compressed:    %s\n", bytes_to_hex(compressed, compressed_len) );
 
         // decompress key from compressed back into buf
         memset(buf, 0, sizeof(buf)); // Make sure we don't cheat :)
         mbedtls_ecp_decompress(&mbedtls_pk_ec(ctx_verify)->grp, compressed, compressed_len,
             buf, &buflen, sizeof(buf));
-        printf("decompressed:  %s\n", bytes_to_hex(buf, buflen) );
+        printf( "decompressed:  %s\n", bytes_to_hex(buf, buflen) );
     }
 
     // MBEDTLS_ECP_PF_COMPRESSED format is _not_ supported here!
     if( (ret = mbedtls_ecp_point_read_binary( &mbedtls_pk_ec( ctx_verify)->grp,
             &mbedtls_pk_ec(ctx_verify)->Q, buf, buflen )) != 0 )
     {
-        printf("mbedtls_ecp_point_read_binary returned: %d\n");
+        printf( "mbedtls_ecp_point_read_binary returned: %d\n" );
         exit(1);
     }
 
@@ -299,7 +295,7 @@ int test(int ecparams) {
     }
     else
     {
-        printf("Signature is valid!\n");
+        printf( "Signature is valid!\n" );
     }
 
     mbedtls_pk_free( &ctx_verify );
@@ -312,5 +308,5 @@ int test(int ecparams) {
 }
 
 int main(int argc, char **argv) {
-    return test(MBEDTLS_ECP_DP_SECP192R1);
+    return test( MBEDTLS_ECP_DP_SECP192R1 );
 }
