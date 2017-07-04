@@ -80,7 +80,7 @@ cleanup:
 }
 
 // Helper to convert binary to hex
-char *bytes_to_hex( const uint8_t bin[], size_t len ) {
+static char *bytes_to_hex( const uint8_t bin[], size_t len ) {
     static const char hexchars[16] = "0123456789abcdef";
     static char hex[512];
     size_t i;
@@ -94,8 +94,7 @@ char *bytes_to_hex( const uint8_t bin[], size_t len ) {
 }
 
 // Helper to print public keys
-static void dump_pubkey( const char *title, mbedtls_ecdsa_context *key )
-{
+static void dump_pubkey( const char *title, mbedtls_ecdsa_context *key ) {
     uint8_t buf[512];
     size_t len;
 
@@ -110,7 +109,7 @@ static void dump_pubkey( const char *title, mbedtls_ecdsa_context *key )
 }
 
 // Helper to print bignums
-void print_mpi(const char *title, const mbedtls_mpi *n) {
+static void print_mpi(const char *title, const mbedtls_mpi *n) {
     char buf[512];
     size_t olen = 0;
     if(mbedtls_mpi_write_string( n, 16, buf, sizeof(buf), &olen ) != 0) {
@@ -122,17 +121,17 @@ void print_mpi(const char *title, const mbedtls_mpi *n) {
 }
 
 // Helper to check if this holds for prime P: curve->p == 3 (mod 4)
-void check_prime(mbedtls_mpi *P){
+static void check_prime(mbedtls_mpi *P){
     mbedtls_mpi tmp;
     mbedtls_mpi _4;
-    mbedtls_mpi_init(&tmp);
-    mbedtls_mpi_init(&_4);
+    mbedtls_mpi_init( &tmp );
+    mbedtls_mpi_init( &_4 );
 
     mbedtls_mpi_lset( &_4, 4 );
-    mbedtls_mpi_copy(&tmp, P);
+    mbedtls_mpi_copy( &tmp, P );
 
-    mbedtls_mpi_mod_mpi(&tmp, &tmp, &_4);
-    print_mpi("We can use fast sqrt mod P if the output is 3: ", &tmp);
+    mbedtls_mpi_mod_mpi( &tmp, &tmp, &_4 );
+    print_mpi( "We can use fast sqrt mod P if the output is 3: ", &tmp );
 }
 
 int mbedtls_ecp_decompress(
