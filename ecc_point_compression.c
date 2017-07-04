@@ -167,9 +167,10 @@ int mbedtls_ecp_compress(
     if( osize < *olen )
         return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
 
-    // 0x02+X if Y is even, 0x03+X if Y is odd
     memcpy( output, input, *olen );
-    output[0] = 0x02 + (input[*olen] & 1);
+
+    // Set 0x02+X if Y is even, 0x03+X if Y is odd
+    output[0] = 0x02 + (input[2 * plen] & 1);
 
 cleanup:
     return( 0 );
