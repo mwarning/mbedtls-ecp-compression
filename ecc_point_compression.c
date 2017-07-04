@@ -19,65 +19,6 @@
 *
 */
 
-#define INC_MUL_COUNT
-
-// Copied from mbedtls-2.4.2/library/ecp.c
-#define MOD_MUL( N )    do { MBEDTLS_MPI_CHK( ecp_modp( &N, grp ) ); INC_MUL_COUNT } \
-                        while( 0 )
-
-// Copied from mbedtls-2.4.2/library/ecp.c
-/*
- * Reduce a mbedtls_mpi mod p in-place, to use after mbedtls_mpi_sub_mpi
- * N->s < 0 is a very fast test, which fails only if N is 0
- */
-#define MOD_SUB( N )                                \
-    while( N.s < 0 && mbedtls_mpi_cmp_int( &N, 0 ) != 0 )   \
-        MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &N, &N, &grp->P ) )
-
-// Copied from mbedtls-2.4.2/library/ecp.c
-/*
- * Reduce a mbedtls_mpi mod p in-place, to use after mbedtls_mpi_add_mpi and mbedtls_mpi_mul_int.
- * We known P, N and the result are positive, so sub_abs is correct, and
- * a bit faster.
- */
-#define MOD_ADD( N )                                \
-    while( mbedtls_mpi_cmp_mpi( &N, &grp->P ) >= 0 )        \
-        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_abs( &N, &N, &grp->P ) )
-
-// Copied from mbedtls-2.4.2/library/ecp.c
-/*
- * Wrapper around fast quasi-modp functions, with fall-back to mbedtls_mpi_mod_mpi.
- * See the documentation of struct mbedtls_ecp_group.
- *
- * This function is in the critial loop for mbedtls_ecp_mul, so pay attention to perf.
- */
-static int ecp_modp( mbedtls_mpi *N, const mbedtls_ecp_group *grp )
-{
-    int ret;
-
-    if( grp->modp == NULL )
-        return( mbedtls_mpi_mod_mpi( N, N, &grp->P ) );
-
-    /* N->s < 0 is a much faster test, which fails only if N is 0 */
-    if( ( N->s < 0 && mbedtls_mpi_cmp_int( N, 0 ) != 0 ) ||
-        mbedtls_mpi_bitlen( N ) > 2 * grp->pbits )
-    {
-        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
-    }
-
-    MBEDTLS_MPI_CHK( grp->modp( N ) );
-
-    /* N->s < 0 is a much faster test, which fails only if N is 0 */
-    while( N->s < 0 && mbedtls_mpi_cmp_int( N, 0 ) != 0 )
-        MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( N, N, &grp->P ) );
-
-    while( mbedtls_mpi_cmp_mpi( N, &grp->P ) >= 0 )
-        /* we known P, N and the result are positive */
-        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_abs( N, N, &grp->P ) );
-
-cleanup:
-    return( ret );
-}
 
 // Helper to convert binary to hex
 static char *bytes_to_hex( const uint8_t bin[], size_t len ) {
@@ -171,21 +112,21 @@ int mbedtls_ecp_decompress(
     MBEDTLS_MPI_CHK( mbedtls_mpi_copy( &r, &x ) );
 
     // r = x^2
-    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) ); MOD_MUL( r );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) );
 
     // r = x^2 + a
     if( grp->A.p == NULL ) {
         // Special case where a is -3
-        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_int( &r, &r, 3 ) ); MOD_SUB( r );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_int( &r, &r, 3 ) );
     } else {
-        MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->A ) ); MOD_ADD( r );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->A ) );
     }
 
     // r = x^3 + ax
-    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) ); MOD_MUL( r );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) );
 
     // r = x^3 + ax + b
-    MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->B ) ); MOD_ADD( r );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->B ) );
 
     // r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
 
@@ -195,7 +136,7 @@ int mbedtls_ecp_decompress(
     // n = (P + 1) / 4
     MBEDTLS_MPI_CHK( mbedtls_mpi_shift_r( &n, 2 ) );
 
-    // r ^ ((P + 1) / 4)
+    // r ^ ((P + 1) / 4) (mod p)
     MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod( &r, &r, &n, &grp->P, NULL ) );
 
     // Set sign
