@@ -4,6 +4,7 @@ This is all about two helper methods called mbedtls_ecp_decompress() and mbedtls
 They perform X25519 / Curve25519 point compression and decompression.
 As of mbedtls 2.5.1, mbedtls does not support decompression.
 
+This code has been placed into the Public Domain.
 
 Resources:
 - https://github.com/ARMmbed/mbedtls/pull/521
