@@ -87,8 +87,11 @@ int mbedtls_ecp_decompress(
 
     *olen = 2 * plen + 1; 
 
-    if( osize < *olen || ilen != (plen + 1) )
+    if( osize < *olen )
         return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
+
+    if( ilen != plen + 1 )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
     if( input[0] != 0x02 && input[0] != 0x03 )
         return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
@@ -166,6 +169,12 @@ int mbedtls_ecp_compress(
 
     if( osize < *olen )
         return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
+
+    if( ilen != 2 * plen + 1 )
+        return ( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
+
+    if( input[0] != 0x04 )
+        return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
     memcpy( output, input, *olen );
 
@@ -267,15 +276,15 @@ int test( int ecparams ) {
         printf( "decompressed:  %s\n", bytes_to_hex(buf, buflen) );
 
         // compress key from buf to compressed
-        mbedtls_ecp_compress(&mbedtls_pk_ec(ctx_verify)->grp, buf, buflen,
+        ret = mbedtls_ecp_compress(&mbedtls_pk_ec(ctx_verify)->grp, buf, buflen,
             compressed, &compressed_len, sizeof(compressed));
-        printf( "compressed:    %s\n", bytes_to_hex(compressed, compressed_len) );
+        printf( "compressed:    %s (ret: %d)\n", bytes_to_hex(compressed, compressed_len), ret );
 
         // decompress key from compressed back into buf
         memset(buf, 0, sizeof(buf)); // Make sure we don't cheat :)
-        mbedtls_ecp_decompress(&mbedtls_pk_ec(ctx_verify)->grp, compressed, compressed_len,
+        ret = mbedtls_ecp_decompress(&mbedtls_pk_ec(ctx_verify)->grp, compressed, compressed_len,
             buf, &buflen, sizeof(buf));
-        printf( "decompressed:  %s\n", bytes_to_hex(buf, buflen) );
+        printf( "decompressed:  %s (ret: %d)\n", bytes_to_hex(buf, buflen), ret );
     }
 
     // MBEDTLS_ECP_PF_COMPRESSED format is _not_ supported here!
