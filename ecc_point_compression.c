@@ -182,7 +182,7 @@ int mbedtls_ecp_compress(
     // output will consist of 0x0?|X
     memcpy( output, input, *olen );
 
-    // Encode sign into first byte (either 0x02 or 0x03)
+    // Encode even/odd of Y into first byte (either 0x02 or 0x03)
     output[0] = 0x02 + (input[2 * plen] & 1);
 
 cleanup:
@@ -271,24 +271,24 @@ int test( int ecparams ) {
     }
 
     {
-        printf( "Perform key transform...\n" );
+        printf( "Perform key transformations...\n" );
 
         size_t compressed_len;
         unsigned char compressed[512];
 
         // We have the uncompressed key
-        printf( "decompressed:  %s\n", bytes_to_hex(buf, buflen) );
+        printf( "starting point:         %s\n", bytes_to_hex(buf, buflen) );
 
         // compress key from buf to compressed
         ret = mbedtls_ecp_compress(&mbedtls_pk_ec(ctx_verify)->grp, buf, buflen,
             compressed, &compressed_len, sizeof(compressed));
-        printf( "compressed:    %s (ret: %d)\n", bytes_to_hex(compressed, compressed_len), ret );
+        printf( "mbedtls_ecp_compress:   %s\n", bytes_to_hex(compressed, compressed_len), ret );
 
         // decompress key from compressed back into buf
         memset(buf, 0, sizeof(buf)); // Make sure we don't cheat :)
         ret = mbedtls_ecp_decompress(&mbedtls_pk_ec(ctx_verify)->grp, compressed, compressed_len,
             buf, &buflen, sizeof(buf));
-        printf( "decompressed:  %s (ret: %d)\n", bytes_to_hex(buf, buflen), ret );
+        printf( "mbedtls_ecp_decompress: %s\n", bytes_to_hex(buf, buflen) );
     }
 
     // MBEDTLS_ECP_PF_COMPRESSED format is _not_ supported here!
