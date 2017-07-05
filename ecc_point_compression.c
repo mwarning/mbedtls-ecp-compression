@@ -186,7 +186,6 @@ int mbedtls_ecp_compress(
     // Encode even/odd of Y into first byte (either 0x02 or 0x03)
     output[0] = 0x02 + (input[2 * plen] & 1);
 
-cleanup:
     return( 0 );
 }
 
