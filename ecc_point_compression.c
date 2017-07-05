@@ -96,7 +96,7 @@ int mbedtls_ecp_decompress(
     if( input[0] != 0x02 && input[0] != 0x03 )
         return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
-    // 0x04+X+Y
+    // output will consist of 0x04|X|Y
     memcpy( output, input, ilen );
     output[0] = 0x04;
 
@@ -143,7 +143,10 @@ int mbedtls_ecp_decompress(
     MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod( &r, &r, &n, &grp->P, NULL ) );
 
     // Set sign
-    MBEDTLS_MPI_CHK( mbedtls_mpi_set_bit( &r, 0, input[0] & 1 ) );
+    if( input[0] == 0x03 ) {
+        // r = p - r
+        MBEDTLS_MPI_CHK( mbedtls_mpi_sub_mpi( &r, &grp->P, &r ) );
+    }
 
     // y => output
     ret = mbedtls_mpi_write_binary( &r, output + 1 + plen, plen );
@@ -176,9 +179,10 @@ int mbedtls_ecp_compress(
     if( input[0] != 0x04 )
         return( MBEDTLS_ERR_ECP_BAD_INPUT_DATA );
 
+    // output will consist of 0x0?|X
     memcpy( output, input, *olen );
 
-    // Set 0x02+X if Y is even, 0x03+X if Y is odd
+    // Encode sign into first byte (either 0x02 or 0x03)
     output[0] = 0x02 + (input[2 * plen] & 1);
 
 cleanup:
