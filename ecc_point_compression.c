@@ -131,6 +131,7 @@ int mbedtls_ecp_decompress(
     // r = x^3 + ax + b
     MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->B ) );
 
+    // Calculate quare root of r over finite field P
     // r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
 
     // n = P + 1
@@ -142,7 +143,7 @@ int mbedtls_ecp_decompress(
     // r ^ ((P + 1) / 4) (mod p)
     MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod( &r, &r, &n, &grp->P, NULL ) );
 
-    // Select solution that has the expected "sign" (equals odd/even solution in finite group)
+    // Select solution that has the correct "sign" (equals odd/even solution in finite group)
     if( (input[0] == 0x03) != mbedtls_mpi_get_bit( &r, 0 ) ) {
         // r = p - r
         MBEDTLS_MPI_CHK( mbedtls_mpi_sub_mpi( &r, &grp->P, &r ) );
