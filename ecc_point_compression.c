@@ -142,8 +142,8 @@ int mbedtls_ecp_decompress(
     // r ^ ((P + 1) / 4) (mod p)
     MBEDTLS_MPI_CHK( mbedtls_mpi_exp_mod( &r, &r, &n, &grp->P, NULL ) );
 
-    // Set sign
-    if( input[0] == 0x03 ) {
+    // Select solution that has the expected "sign" (equals odd/even solution in finite group)
+    if( (input[0] == 0x03) != mbedtls_mpi_get_bit( &r, 0 ) ) {
         // r = p - r
         MBEDTLS_MPI_CHK( mbedtls_mpi_sub_mpi( &r, &grp->P, &r ) );
     }
