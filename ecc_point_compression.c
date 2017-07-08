@@ -82,10 +82,13 @@ int mbedtls_ecp_decompress(
 ) {
     int ret;
     size_t plen;
+    mbedtls_mpi r;
+    mbedtls_mpi x;
+    mbedtls_mpi n;
 
     plen = mbedtls_mpi_size( &grp->P );
 
-    *olen = 2 * plen + 1; 
+    *olen = 2 * plen + 1;
 
     if( osize < *olen )
         return( MBEDTLS_ERR_ECP_BUFFER_TOO_SMALL );
@@ -99,10 +102,6 @@ int mbedtls_ecp_decompress(
     // output will consist of 0x04|X|Y
     memcpy( output, input, ilen );
     output[0] = 0x04;
-
-    mbedtls_mpi r;
-    mbedtls_mpi x;
-    mbedtls_mpi n;
 
     mbedtls_mpi_init( &r );
     mbedtls_mpi_init( &x );
@@ -128,8 +127,8 @@ int mbedtls_ecp_decompress(
     // r = x^3 + ax + b
     MBEDTLS_MPI_CHK( mbedtls_mpi_add_mpi( &r, &r, &grp->B ) );
 
-    // Calculate quare root of r over finite field P
-    // r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
+    // Calculate quare root of r over finite field P:
+    //   r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
 
     // n = P + 1
     MBEDTLS_MPI_CHK( mbedtls_mpi_add_int( &n, &grp->P, 1 ) );
