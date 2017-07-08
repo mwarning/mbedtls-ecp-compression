@@ -111,11 +111,8 @@ int mbedtls_ecp_decompress(
     // x <= input
     MBEDTLS_MPI_CHK( mbedtls_mpi_read_binary( &x, input + 1, plen ) );
 
-    // r = x
-    MBEDTLS_MPI_CHK( mbedtls_mpi_copy( &r, &x ) );
-
     // r = x^2
-    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &r, &x ) );
+    MBEDTLS_MPI_CHK( mbedtls_mpi_mul_mpi( &r, &x, &x ) );
 
     // r = x^2 + a
     if( grp->A.p == NULL ) {
