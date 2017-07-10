@@ -1,4 +1,4 @@
-# ECC Point compression/decompression for mbedtls
+# Elliptic Curve Point compression/decompression for mbedtls
 
 This is all about two helper methods called mbedtls_ecp_decompress() and mbedtls_ecp_compress().
 They perform X25519 / Curve25519 point compression and decompression.
