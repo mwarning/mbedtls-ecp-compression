@@ -318,5 +318,10 @@ int test( int ecparams ) {
 }
 
 int main(int argc, char **argv) {
-    return test( MBEDTLS_ECP_DP_SECP192R1 );
+    /*
+    * Test point compression and decompression.
+    * This implementation only works for curves where curve->p == 3 (mod 4) holds,
+    * such as NIST / Brainpool / "Koblitz" curves used in mbedtls.
+    */
+    return test( MBEDTLS_ECP_DP_SECP256R1 );
 }
