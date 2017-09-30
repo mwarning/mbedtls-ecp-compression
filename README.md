@@ -2,7 +2,7 @@
 
 This is all about two helper methods called mbedtls_ecp_decompress() and mbedtls_ecp_compress().
 They perform X25519 / Curve25519 point compression and decompression.
-As of mbedtls 2.5.1, mbedtls does not support decompression.
+mbedtls will likely never support decompression, as it is not mandated in the TLS specification.
 
 This code has been placed into the Public Domain.
 
