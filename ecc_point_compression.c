@@ -2,7 +2,7 @@
 * This is all about mbedtls_ecp_decompress() and mbedtls_ecp_compress()
 *
 * Perform X25519 / Curve25519 point compression and decompression for mbedtls.
-* As of mbedtls 2.5.1, mbedtls does not support decompression.
+* As of mbedtls 2.5.1, mbedtls does not support decompression yet.
 *
 */
 
