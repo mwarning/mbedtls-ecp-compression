@@ -1,8 +1,8 @@
-# Elliptic Curve Point compression/decompression for mbedtls
+# Elliptic Curve Point compression/decompression for mbedTLS
 
-This is all about two helper methods called mbedtls_ecp_decompress() and mbedtls_ecp_compress().
+This is all about two helper methods called `mbedtls_ecp_decompress()` and `mbedtls_ecp_compress()`.
 They perform X25519 / Curve25519 point compression and decompression.
-mbedtls will likely never support decompression, as it is not mandated in the TLS specification.
+mbedTLS will likely never support decompression, as it is not mandated in the TLS specification.
 
 This code has been placed into the Public Domain.
 
