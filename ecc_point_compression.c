@@ -60,7 +60,7 @@ int mbedtls_ecp_decompress(
     // r = x^3 + ax + b
     MBEDTLS_MPI_CHK(mbedtls_mpi_add_mpi(&r, &r, &grp->B));
 
-    // Calculate quare root of r over finite field P:
+    // Calculate square root of r over finite field P:
     //   r = sqrt(x^3 + ax + b) = (x^3 + ax + b) ^ ((P + 1) / 4) (mod P)
 
     // n = P + 1
