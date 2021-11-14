@@ -1,7 +1,9 @@
 
 #include <string.h>
 
-#include "mbedtls/config.h"
+#define MBEDTLS_ALLOW_PRIVATE_ACCESS
+
+#include "mbedtls/mbedtls_config.h"
 #include "mbedtls/ecp.h"
 #include "mbedtls/platform.h"
 #include "mbedtls/entropy.h"
@@ -127,7 +129,7 @@ int test(int ecparams)
     printf("Signing message...\n");
 
     if ((ret = mbedtls_ecdsa_write_signature(mbedtls_pk_ec(ctx_sign), MBEDTLS_MD_SHA256,
-            hash, sizeof(hash), sig, &sig_len, mbedtls_ctr_drbg_random, &ctr_drbg)) != 0)
+            hash, sizeof(hash), sig, sizeof(sig), &sig_len, mbedtls_ctr_drbg_random, &ctr_drbg)) != 0)
     {
         printf("mbedtls_ecdsa_genkey returned %d\n", ret);
         return(1);

@@ -6,6 +6,8 @@
 *
 */
 
+#define MBEDTLS_ALLOW_PRIVATE_ACCESS
+
 #include "ecc_point_compression.h"
 
 int mbedtls_ecp_decompress(
