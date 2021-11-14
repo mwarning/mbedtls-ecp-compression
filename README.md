@@ -1,10 +1,12 @@
 # Elliptic Curve Point compression/decompression for mbedTLS
 
 This is all about two helper methods called `mbedtls_ecp_decompress()` and `mbedtls_ecp_compress()`.
-They perform X25519 / Curve25519 point compression and decompression.
-mbedTLS will likely never support decompression, as it is not mandated in the TLS specification.
+They perform X25519 / Curve25519 point compression and decompression. This halves the length of the public key.
+mbedTLS will likely never support point decompression, as it is not mandated in the TLS specification.
 
 EC crypto keys for TLS consist of concatenated x and y coordinates (hence a point), which makes them rather long to print out. But since the function is known, only x really needs to be transmitted. This can help to keep QR-Codes smaller, as less data needs to be transmitted.
+
+For support of mbedTLS version < 3.0.0, check out an older commit.
 
 ## Supported Curves
 
